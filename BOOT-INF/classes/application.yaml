@@ -1,0 +1,189 @@
+spring:
+  application:
+    name: data-collector
+  
+  config:
+    import: optional:configserver:http://config-server:8888
+  
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+  
+  # Database Configuration
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/ai_scientist}
+    username: ${SPRING_DATASOURCE_USERNAME:ai_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:devpassword_change_in_production}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+  
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+      properties:
+        enable.idempotence: true
+    consumer:
+      group-id: data-collector-group
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+  
+  # Redis Configuration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:devpassword_change_in_production}
+      timeout: 5000
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+# Eureka Client
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://admin:admin@localhost:8761/eureka/}
+    registry-fetch-interval-seconds: 5
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+    metadata-map:
+      version: ${spring.application.version:1.0.0}
+      profile: ${spring.profiles.active:default}
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    export:
+      prometheus:
+        enabled: true
+
+# Resilience4j
+resilience4j:
+  circuitbreaker:
+    instances:
+      nasa-api:
+        register-health-indicator: true
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        wait-duration-in-open-state: 30s
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 50
+        slow-call-duration-threshold: 2s
+      noaa-api:
+        register-health-indicator: true
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        wait-duration-in-open-state: 30s
+        failure-rate-threshold: 50
+  retry:
+    instances:
+      nasa-api:
+        max-attempts: 3
+        wait-duration: 1s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+      noaa-api:
+        max-attempts: 3
+        wait-duration: 1s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+
+# Application Configuration
+app:
+  nasa:
+    api:
+      base-url: https://api.nasa.gov
+      key: ${NASA_API_KEY:DEMO_KEY}
+      donki-url: ${app.nasa.api.base-url}/DONKI
+      cme-endpoint: /CME
+      solar-flare-endpoint: /FLR
+  
+  noaa:
+    api:
+      base-url: https://services.swpc.noaa.gov
+      kp-index-url: ${app.noaa.api.base-url}/products/noaa-planetary-k-index.json
+      solar-wind-url: ${app.noaa.api.base-url}/products/solar-wind/mag-1-day.json
+  
+  scheduler:
+    nasa-cme:
+      cron: "0 */15 * * * *"  # Every 15 minutes
+      enabled: true
+    noaa-kp:
+      cron: "0 */10 * * * *"  # Every 10 minutes
+      enabled: true
+  
+  kafka:
+    topics:
+      raw-space-weather-kp: raw.spaceweather.kp
+      raw-space-weather-cme: raw.spaceweather.cme
+      raw-space-weather-solar-flare: raw.spaceweather.solar-flare
+  
+  cache:
+    ttl:
+      kp-index: 300  # 5 minutes
+      cme-data: 900  # 15 minutes
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.aiscientist: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.kafka: INFO
+    org.hibernate: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Server Configuration
+server:
+  port: ${PORT:8082}
+  servlet:
+    context-path: /
+  error:
+    include-message: always
+    include-binding-errors: always
