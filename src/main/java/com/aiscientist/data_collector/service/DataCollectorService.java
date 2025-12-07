@@ -1,6 +1,9 @@
 package com.aiscientist.data_collector.service;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,9 +35,15 @@ public class DataCollectorService {
         
         noaaApiService.fetchKpIndexData()
                 .doOnNext(event -> {
+                    // Parse NOAA timestamp format: "2025-11-30 00:00:00.000"
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+                    Instant timestamp = LocalDateTime.parse(event.getTimeTag(), formatter)
+                            .atZone(ZoneOffset.UTC)
+                            .toInstant();
+                    
                     // Save to database
                     Metric metric = Metric.builder()
-                            .timestamp(Instant.parse(event.getTimeTag()))
+                            .timestamp(timestamp)
                             .source("noaa")
                             .metricType("kp_index")
                             .kpIndex(event.getKpIndex() != null ? event.getKpIndex() : event.getEstimatedKp())

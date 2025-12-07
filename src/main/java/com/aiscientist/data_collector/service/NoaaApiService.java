@@ -44,14 +44,15 @@ public class NoaaApiService {
                 .flatMapMany(response -> {
                     try {
                         return Flux.fromIterable(response)
+                                .skip(1) // Skip header row: ["time_tag","Kp","a_running","station_count"]
                                 .map(node -> {
                                     try {
                                         String rawData = objectMapper.writeValueAsString(node);
+                                        // NOAA returns array: [time_tag, Kp, a_running, station_count]
                                         return KpIndexEvent.builder()
-                                                .timeTag(node.get("time_tag").asText())
-                                                .kpIndex(node.has("Kp") ? node.get("Kp").asDouble() : null)
-                                                .estimatedKp(node.has("estimated_Kp") ? 
-                                                        node.get("estimated_Kp").asDouble() : null)
+                                                .timeTag(node.get(0).asText())
+                                                .kpIndex(node.get(1).asDouble())
+                                                .estimatedKp(null) // Not provided in this endpoint
                                                 .source("noaa")
                                                 .timestamp(Instant.now())
                                                 .rawData(rawData)
