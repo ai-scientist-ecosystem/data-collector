@@ -115,8 +115,8 @@ spring:
   
   datasource:
     url: jdbc:postgresql://localhost:5433/ai_scientist
-    username: postgres
-    password: postgres123
+    username: ai_user
+    password: devpassword_change_in_production
   
   kafka:
     bootstrap-servers: localhost:9092
