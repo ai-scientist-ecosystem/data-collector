@@ -19,6 +19,7 @@
 		<spring-cloud.version>2023.0.6</spring-cloud.version>
 		<mapstruct.version>1.5.5.Final</mapstruct.version>
 		<lombok.version>1.18.36</lombok.version>
+		<postgresql.version>42.7.7</postgresql.version>
 	</properties>
 	<dependencies>
 		<!-- Spring Boot Starters -->
@@ -71,6 +72,7 @@
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
+			<version>${postgresql.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		
