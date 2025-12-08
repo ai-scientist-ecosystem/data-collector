@@ -95,9 +95,7 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
-    export:
-      prometheus:
-        enabled: true
+  prometheus.metrics.export.enabled: true
 
 # Resilience4j
 resilience4j:
