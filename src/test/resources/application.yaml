@@ -20,3 +20,23 @@ management:
     web:
       exposure:
         include: health,info
+
+# Test configuration for AppConfig
+app:
+  noaa:
+    api:
+      baseUrl: https://services.swpc.noaa.gov
+      kpIndexPath: /products/noaa-planetary-k-index.json
+      solarFlarePath: /products/solar-flare.json
+      cmeReportPath: /products/cme-report.json
+    timeout: 5000
+    retryAttempts: 3
+  nasa:
+    api:
+      baseUrl: https://api.nasa.gov
+      donkiPath: /DONKI
+      apodPath: /planetary/apod
+    apiKey: DEMO_KEY
+    timeout: 5000
+    retryAttempts: 3
+
