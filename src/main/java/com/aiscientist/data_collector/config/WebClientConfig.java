@@ -8,7 +8,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class WebClientConfig {
 
     @Bean
-    public WebClient nasaWebClient(AppConfig config) {
+    WebClient nasaWebClient(AppConfig config) {
         return WebClient.builder()
                 .baseUrl(config.getNasa().getApi().getBaseUrl())
                 .defaultHeader("Accept", "application/json")
@@ -16,7 +16,7 @@ public class WebClientConfig {
     }
 
     @Bean
-    public WebClient noaaWebClient(AppConfig config) {
+    WebClient noaaWebClient(AppConfig config) {
         return WebClient.builder()
                 .baseUrl(config.getNoaa().getApi().getBaseUrl())
                 .defaultHeader("Accept", "application/json")
