@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 
 import lombok.Data;
 
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @ConfigurationProperties(prefix = "app")
 @Data
 public class AppConfig {
