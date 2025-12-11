@@ -1,13 +1,13 @@
 package com.aiscientist.data_collector.service;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.time.Instant;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -56,13 +56,9 @@ class NoaaApiServiceTest {
     }
 
     @Test
-    @Disabled("Test mock data structure doesn't match actual NOAA API response format - needs array of arrays instead of objects")
     void fetchKpIndexData_shouldReturnKpIndexEvents() throws Exception {
-        // Given - Create array with multiple elements to ensure Flux emits items
-        String jsonResponse = "[" +
-            "{\"time_tag\":\"2024-12-07T00:00:00Z\",\"Kp\":3.0,\"estimated_Kp\":null}," +
-            "{\"time_tag\":\"2024-12-07T00:01:00Z\",\"Kp\":2.7,\"estimated_Kp\":null}" +
-            "]";
+        // Given
+        String jsonResponse = "[{\"time_tag\":\"2024-12-07T00:00:00Z\",\"Kp\":3.0,\"estimated_Kp\":null}]";
         ArrayNode arrayNode = (ArrayNode) objectMapper.readTree(jsonResponse);
         
         when(noaaWebClient.get()).thenReturn(requestHeadersUriSpec);
@@ -73,15 +69,15 @@ class NoaaApiServiceTest {
         // When
         Flux<KpIndexEvent> result = noaaApiService.fetchKpIndexData();
         
-        // Then - Expect at least one element before completion
+        // Then
         StepVerifier.create(result)
-                .expectNextMatches(event -> 
-                    event != null && 
-                    "2024-12-07T00:00:00Z".equals(event.getTimeTag()) &&
-                    event.getKpIndex() == 3.0 &&
-                    "noaa".equals(event.getSource())
-                )
-                .expectNextCount(1)  // Second element
+                .assertNext(event -> {
+                    assertNotNull(event);
+                    assertEquals("2024-12-07T00:00:00Z", event.getTimeTag());
+                    assertEquals(3.0, event.getKpIndex());
+                    assertEquals("noaa", event.getSource());
+                    assertNotNull(event.getTimestamp());
+                })
                 .verifyComplete();
     }
 }

@@ -3,7 +3,6 @@ package com.aiscientist.data_collector.service;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -36,8 +35,7 @@ class DataCollectorServiceTest {
     private DataCollectorService dataCollectorService;
 
     @Test
-    @Disabled("Test requires async subscription completion which is not guaranteed in unit test context")
-    void collectKpIndexData_shouldProcessAndSaveData() throws InterruptedException {
+    void collectKpIndexData_shouldProcessAndSaveData() {
         // Given
         KpIndexEvent event = KpIndexEvent.builder()
                 .timeTag("2024-12-07T00:00:00Z")
@@ -48,9 +46,8 @@ class DataCollectorServiceTest {
         when(noaaApiService.fetchKpIndexData()).thenReturn(Flux.just(event));
         when(metricRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         
-        // When - collectKpIndexData() is async, need to wait for completion
+        // When
         dataCollectorService.collectKpIndexData();
-        Thread.sleep(100); // Allow async processing to complete
         
         // Then
         verify(noaaApiService, times(1)).fetchKpIndexData();
@@ -58,8 +55,7 @@ class DataCollectorServiceTest {
     }
 
     @Test
-    @Disabled("Test requires async subscription completion which is not guaranteed in unit test context")
-    void collectCMEData_shouldProcessAndSaveData() throws InterruptedException {
+    void collectCMEData_shouldProcessAndSaveData() {
         // Given
         CMEEvent event = CMEEvent.builder()
                 .activityId("2024-12-07-CME-001")
@@ -70,9 +66,8 @@ class DataCollectorServiceTest {
         when(nasaApiService.fetchCMEData()).thenReturn(Flux.just(event));
         when(metricRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         
-        // When - collectCMEData() is async, need to wait for completion
+        // When
         dataCollectorService.collectCMEData();
-        Thread.sleep(100); // Allow async processing to complete
         
         // Then
         verify(nasaApiService, times(1)).fetchCMEData();

@@ -38,7 +38,7 @@ public class Metric {
     @Column(name = "speed_kmh")
     private Integer speedKmh;
 
-    @Column(name = "raw_data", columnDefinition = "TEXT")
+    @Column(name = "raw_data", columnDefinition = "jsonb")
     private String rawData;
 
     @Column(name = "processed_at")

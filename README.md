@@ -2,11 +2,21 @@
 
 ## 📋 Tổng Quan
 
-**Data Collector** là microservice thu thập dữ liệu thời tiết vũ trụ từ NASA và NOAA APIs, lưu trữ vào PostgreSQL và publish events lên Kafka để các service khác xử lý.
+**Data Collector** là microservice thu thập dữ liệu từ nhiều nguồn khoa học:
+- **Space Weather**: Kp-index (NOAA), CME (NASA DONKI)
+- **Water Levels & Flood Monitoring**: Ocean tides (NOAA CO-OPS), River levels (USGS)
+- **🌍 Earthquake Monitoring**: Seismic activity worldwide (USGS Earthquake API)
+
+Dữ liệu được lưu trữ vào PostgreSQL và publish events lên Kafka để các service khác xử lý.
 
 ### Chức Năng Chính
 - ✅ Thu thập **Kp-index** từ NOAA (mỗi 10 phút)
 - ✅ Thu thập **CME (Coronal Mass Ejection)** từ NASA DONKI (mỗi 15 phút)
+- ✅ **Thu thập mực nước biển** từ NOAA Tides & Currents (mỗi 5 phút) 🌊
+- ✅ **Thu thập mực nước sông** từ USGS Water Services (mỗi 10 phút) 🌊
+- ✅ **Phát hiện lũ lụt tự động** dựa trên ngưỡng flood stage 🚨
+- ✅ **Giám sát động đất toàn cầu** (mỗi 2 phút) 🌍
+- ✅ **Cảnh báo sóng thần** dựa trên magnitude, độ sâu và vị trí 🌊
 - ✅ Lưu trữ metrics vào PostgreSQL
 - ✅ Publish events lên Kafka topics
 - ✅ Circuit breaker & retry mechanism với Resilience4j
@@ -44,12 +54,34 @@
 └─────────────┘           └──────────────┘
 ```
 
+### 🌊 Flood Warning System Features
+See [FLOOD_WARNING_SYSTEM.md](./FLOOD_WARNING_SYSTEM.md) for detailed documentation.
+
+**Capabilities:**
+- 14 NOAA coastal monitoring stations (NYC, Miami, San Francisco, etc.)
+- 13 USGS river monitoring sites (Potomac, Mississippi, Colorado, etc.)
+- 5 flood severity levels: NORMAL → ACTION → MINOR → MODERATE → MAJOR
+- Real-time flood detection and alerting
+- REST API: `/api/v1/water-level/*`
+
+### 🌍 Earthquake Monitoring Features
+See [EARTHQUAKE_MONITORING.md](./EARTHQUAKE_MONITORING.md) for detailed documentation.
+
+**Capabilities:**
+- Global earthquake monitoring (USGS API)
+- 7 severity levels: MICRO → MINOR → LIGHT → MODERATE → STRONG → MAJOR → GREAT
+- Tsunami risk assessment (0-100 score)
+- Real-time dangerous earthquake alerts (M >= 5.0)
+- Catastrophic earthquake tracking (M >= 7.0)
+- Geographic queries and location-based monitoring
+- REST API: `/api/v1/earthquake/*`
+
 ---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- **Java 17+**
+- **Java 21+**
 - **Maven 3.9+**
 - **Docker & Docker Compose**
 - **PostgreSQL 15**
@@ -59,7 +91,7 @@
 ### 1. Clone & Build
 ```bash
 cd data-collector
-./mvnw clean package -DskipTests
+mvn clean package -DskipTests
 ```
 
 ### 2. Run with Docker Compose
@@ -97,7 +129,28 @@ curl -X POST http://localhost:8082/api/v1/collector/collect/cme
 
 # Get recent metrics
 curl "http://localhost:8082/api/v1/collector/metrics?source=noaa&hours=24"
+
+# 🌊 Flood Warning Endpoints
+curl http://localhost:8082/api/v1/water-level/health
+curl http://localhost:8082/api/v1/water-level/flooding
+curl -X POST http://localhost:8082/api/v1/water-level/collect/all
 ```
+
+---
+
+## 🌊 Flood Warning System
+
+**NEW FEATURE**: Real-time flood monitoring from ocean tides and river levels!
+
+- **14 coastal stations** (NOAA CO-OPS): NYC, Miami, San Francisco, Seattle, Honolulu, etc.
+- **13 major rivers** (USGS): Potomac, Mississippi, Colorado, Sacramento, etc.
+- **Automatic flood detection** based on NWS flood stages
+- **Multi-severity alerts**: ACTION → MINOR → MODERATE → MAJOR
+- **Global coverage**: 3,000+ NOAA stations, 25,000+ USGS sites available
+
+📖 **Full Documentation**: [FLOOD_WARNING_SYSTEM.md](./FLOOD_WARNING_SYSTEM.md)
+
+---
 
 ---
 
@@ -114,9 +167,9 @@ spring:
     name: data-collector
   
   datasource:
-    url: jdbc:postgresql://localhost:5433/ai_scientist
-    username: postgres
-    password: postgres123
+    url: jdbc:postgresql://localhost:5433/data_collector_db
+    username: data_user
+    password: admin
   
   kafka:
     bootstrap-servers: localhost:9092

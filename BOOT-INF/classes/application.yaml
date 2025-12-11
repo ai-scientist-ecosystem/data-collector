@@ -13,7 +13,7 @@ spring:
   
   # Database Configuration
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/data_collector_db}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/ai_scientist}
     username: ${SPRING_DATASOURCE_USERNAME:ai_user}
     password: ${SPRING_DATASOURCE_PASSWORD:devpassword_change_in_production}
     driver-class-name: org.postgresql.Driver
@@ -27,7 +27,7 @@ spring:
   # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
@@ -119,24 +119,6 @@ resilience4j:
         minimum-number-of-calls: 5
         wait-duration-in-open-state: 30s
         failure-rate-threshold: 50
-      noaa-tides-api:
-        register-health-indicator: true
-        sliding-window-size: 10
-        minimum-number-of-calls: 5
-        wait-duration-in-open-state: 30s
-        failure-rate-threshold: 50
-      usgs-water-api:
-        register-health-indicator: true
-        sliding-window-size: 10
-        minimum-number-of-calls: 5
-        wait-duration-in-open-state: 30s
-        failure-rate-threshold: 50
-      usgs-earthquake-api:
-        register-health-indicator: true
-        sliding-window-size: 10
-        minimum-number-of-calls: 5
-        wait-duration-in-open-state: 30s
-        failure-rate-threshold: 50
   retry:
     instances:
       nasa-api:
@@ -145,21 +127,6 @@ resilience4j:
         enable-exponential-backoff: true
         exponential-backoff-multiplier: 2
       noaa-api:
-        max-attempts: 3
-        wait-duration: 1s
-        enable-exponential-backoff: true
-        exponential-backoff-multiplier: 2
-      noaa-tides-api:
-        max-attempts: 3
-        wait-duration: 1s
-        enable-exponential-backoff: true
-        exponential-backoff-multiplier: 2
-      usgs-water-api:
-        max-attempts: 3
-        wait-duration: 1s
-        enable-exponential-backoff: true
-        exponential-backoff-multiplier: 2
-      usgs-earthquake-api:
         max-attempts: 3
         wait-duration: 1s
         enable-exponential-backoff: true
@@ -180,16 +147,6 @@ app:
       base-url: https://services.swpc.noaa.gov
       kp-index-url: ${app.noaa.api.base-url}/products/noaa-planetary-k-index.json
       solar-wind-url: ${app.noaa.api.base-url}/products/solar-wind/mag-1-day.json
-    tides:
-      base-url: https://api.tidesandcurrents.noaa.gov/api/prod
-      application: ai-scientist-ecosystem
-  
-  usgs:
-    water:
-      base-url: https://waterservices.usgs.gov/nwis/iv
-    earthquake:
-      base-url: https://earthquake.usgs.gov
-      min-magnitude: 4.5  # Minimum magnitude for collection (moderate level)
   
   scheduler:
     nasa-cme:
@@ -198,26 +155,12 @@ app:
     noaa-kp:
       cron: "0 */10 * * * *"  # Every 10 minutes
       enabled: true
-    noaa-tides:
-      cron: "0 */5 * * * *"   # Every 5 minutes
-      enabled: true
-    usgs-water:
-      cron: "0 */10 * * * *"  # Every 10 minutes
-      enabled: true
-    earthquake:
-      cron: "0 */2 * * * *"   # Every 2 minutes (real-time monitoring)
-      enabled: true
   
   kafka:
     topics:
       raw-space-weather-kp: raw.spaceweather.kp
       raw-space-weather-cme: raw.spaceweather.cme
       raw-space-weather-solar-flare: raw.spaceweather.solar-flare
-      raw-water-level-data: raw.waterlevel.data
-      raw-flood-alert: raw.flood.alert
-      raw-earthquake-data: raw.earthquake.data
-      raw-earthquake-alert: raw.earthquake.alert
-      raw-tsunami-warning: raw.tsunami.warning
   
   cache:
     ttl:

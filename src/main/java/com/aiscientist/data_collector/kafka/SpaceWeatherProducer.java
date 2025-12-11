@@ -8,7 +8,9 @@ import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 
 import com.aiscientist.data_collector.dto.CMEEvent;
+import com.aiscientist.data_collector.dto.EarthquakeEvent;
 import com.aiscientist.data_collector.dto.KpIndexEvent;
+import com.aiscientist.data_collector.dto.WaterLevelEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,6 +60,45 @@ public class SpaceWeatherProducer {
                          event.getActivityId());
             } else {
                 log.error("Failed to publish CME event: {}", event, ex);
+            }
+        });
+    }
+
+    public void sendWaterLevelEvent(String topic, WaterLevelEvent event) {
+        log.debug("Publishing water level event to topic: {}", topic);
+        
+        CompletableFuture<SendResult<String, Object>> future = 
+            kafkaTemplate.send(topic, event.getStationId(), event);
+        
+        future.whenComplete((result, ex) -> {
+            if (ex == null) {
+                log.info("Water level event published successfully: topic={}, station={}, flooding={}, severity={}", 
+                         topic, 
+                         event.getStationId(),
+                         event.isFlooding(),
+                         event.getFloodSeverity());
+            } else {
+                log.error("Failed to publish water level event: {}", event, ex);
+            }
+        });
+    }
+
+    public void sendEarthquakeEvent(String topic, EarthquakeEvent event) {
+        log.debug("Publishing earthquake event to topic: {}", topic);
+        
+        CompletableFuture<SendResult<String, Object>> future = 
+            kafkaTemplate.send(topic, event.getEarthquakeId(), event);
+        
+        future.whenComplete((result, ex) -> {
+            if (ex == null) {
+                log.info("Earthquake event published successfully: topic={}, id={}, magnitude={}, severity={}, tsunami_risk={}", 
+                         topic, 
+                         event.getEarthquakeId(),
+                         event.getMagnitude(),
+                         event.getSeverity(),
+                         event.getTsunamiRiskScore());
+            } else {
+                log.error("Failed to publish earthquake event: {}", event, ex);
             }
         });
     }

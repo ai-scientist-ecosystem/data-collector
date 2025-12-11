@@ -19,6 +19,10 @@ target/
 *.iml
 *.ipr
 
+# Build artifacts
+*.jar
+app.jar
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
@@ -31,8 +35,3 @@ build/
 
 ### VS Code ###
 .vscode/
-
-### Build artifacts ###
-*.jar
-!.mvn/wrapper/maven-wrapper.jar
-BOOT-INF/
