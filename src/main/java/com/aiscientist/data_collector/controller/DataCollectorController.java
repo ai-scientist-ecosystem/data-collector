@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.aiscientist.data_collector.dto.MetricDTO;
 import com.aiscientist.data_collector.repository.MetricRepository;
 import com.aiscientist.data_collector.service.DataCollectorService;
+import com.aiscientist.data_collector.service.EarthquakeCollectionService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,7 @@ public class DataCollectorController {
 
     private final DataCollectorService dataCollectorService;
     private final MetricRepository metricRepository;
+    private final EarthquakeCollectionService earthquakeCollectionService;
 
     @PostMapping("/collect/kp-index")
     public ResponseEntity<String> triggerKpIndexCollection() {
@@ -40,6 +42,13 @@ public class DataCollectorController {
         log.info("Manual trigger: CME data collection");
         dataCollectorService.collectCMEData();
         return ResponseEntity.ok("CME data collection triggered");
+    }
+
+    @PostMapping("/collect/earthquakes")
+    public ResponseEntity<String> triggerEarthquakeCollection() {
+        log.info("Manual trigger: Earthquake data collection");
+        earthquakeCollectionService.collectRecentEarthquakes();
+        return ResponseEntity.ok("Earthquake data collection triggered");
     }
 
     @GetMapping("/metrics")
