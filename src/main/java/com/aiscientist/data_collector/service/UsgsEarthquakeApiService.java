@@ -62,22 +62,25 @@ public class UsgsEarthquakeApiService {
     public Flux<EarthquakeMetric> fetchRecentEarthquakes(int hours, Double minMag) {
         log.info("Fetching earthquakes from last {} hours with magnitude >= {}", hours, minMag);
 
-        String startTime = Instant.now()
-                .minus(hours, ChronoUnit.HOURS)
-                .toString();
+        Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        String startTime = now.minus(hours, ChronoUnit.HOURS).truncatedTo(ChronoUnit.SECONDS).toString();
+        String endTime = now.toString();
 
-        String queryParams = String.format("?format=geojson&starttime=%s&minmagnitude=%.1f&orderby=time",
-                startTime, minMag);
+        String queryParams = String.format("?format=geojson&starttime=%s&endtime=%s&minmagnitude=%.1f&orderby=time",
+            startTime, endTime, minMag);
+
+        String fullUrl = baseUrl + EARTHQUAKE_ENDPOINT + queryParams;
+        log.debug("USGS API request URL: {}", fullUrl);
 
         return webClient.get()
-                .uri(baseUrl + EARTHQUAKE_ENDPOINT + queryParams)
-                .retrieve()
-                .bodyToMono(String.class)
-                .flatMapMany(this::parseEarthquakeResponse)
-                .flatMap(this::convertToMetric)
-                .doOnNext(metric -> log.debug("Fetched earthquake: {} - M{} at {}",
-                        metric.getEarthquakeId(), metric.getMagnitude(), metric.getLocation()))
-                .doOnError(error -> log.error("Error fetching earthquakes from USGS", error));
+            .uri(fullUrl)
+            .retrieve()
+            .bodyToMono(String.class)
+            .flatMapMany(this::parseEarthquakeResponse)
+            .flatMap(this::convertToMetric)
+            .doOnNext(metric -> log.debug("Fetched earthquake: {} - M{} at {}",
+                metric.getEarthquakeId(), metric.getMagnitude(), metric.getLocation()))
+            .doOnError(error -> log.error("Error fetching earthquakes from USGS", error));
     }
 
     /**
@@ -111,21 +114,24 @@ public class UsgsEarthquakeApiService {
         log.info("Fetching earthquakes near ({}, {}) within {} degrees, magnitude >= {}",
                 latitude, longitude, radiusDegrees, minMag);
 
-        String startTime = Instant.now()
-                .minus(30, ChronoUnit.DAYS)
-                .toString();
+        Instant now = Instant.now();
+        String startTime = now.minus(30, ChronoUnit.DAYS).toString();
+        String endTime = now.toString();
 
         String url = String.format(
-                "?format=geojson&starttime=%s&latitude=%.4f&longitude=%.4f&maxradiuskm=%.1f&minmagnitude=%.1f",
-                startTime, latitude, longitude, radiusDegrees * 111.0, minMag);
+            "?format=geojson&starttime=%s&endtime=%s&latitude=%.4f&longitude=%.4f&maxradiuskm=%.1f&minmagnitude=%.1f",
+            startTime, endTime, latitude, longitude, radiusDegrees * 111.0, minMag);
+
+        String fullUrl = baseUrl + EARTHQUAKE_ENDPOINT + url;
+        log.debug("USGS API request URL (near location): {}", fullUrl);
 
         return webClient.get()
-                .uri(baseUrl + EARTHQUAKE_ENDPOINT + url)
-                .retrieve()
-                .bodyToMono(String.class)
-                .flatMapMany(this::parseEarthquakeResponse)
-                .flatMap(this::convertToMetric)
-                .doOnError(error -> log.error("Error fetching nearby earthquakes", error));
+            .uri(fullUrl)
+            .retrieve()
+            .bodyToMono(String.class)
+            .flatMapMany(this::parseEarthquakeResponse)
+            .flatMap(this::convertToMetric)
+            .doOnError(error -> log.error("Error fetching nearby earthquakes", error));
     }
 
     /**

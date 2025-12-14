@@ -1,25 +1,26 @@
+eureka:
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5433/data_collector_db
+    url: jdbc:postgresql://localhost:5433/ai_scientist
     username: ai_user
-    password: devpassword_change_in_production
+    password: admin
     driver-class-name: org.postgresql.Driver
-  
+
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
-  
+
   kafka:
     bootstrap-servers: localhost:9092
-  
+
   data:
     redis:
       host: localhost
       port: 6379
       password: devpassword_change_in_production
 
-eureka:
+
   client:
     service-url:
       defaultZone: http://admin:admin@localhost:8761/eureka/

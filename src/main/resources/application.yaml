@@ -13,9 +13,9 @@ spring:
   
   # Database Configuration
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/data_collector_db}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/ai_scientist}
     username: ${SPRING_DATASOURCE_USERNAME:ai_user}
-    password: ${SPRING_DATASOURCE_PASSWORD:devpassword_change_in_production}
+    password: ${SPRING_DATASOURCE_PASSWORD:admin}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10

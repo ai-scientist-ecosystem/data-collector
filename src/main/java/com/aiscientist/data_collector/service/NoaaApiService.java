@@ -36,7 +36,6 @@ public class NoaaApiService {
     @Cacheable(value = "kp-index", unless = "#result == null || #result.isEmpty()")
     public Flux<KpIndexEvent> fetchKpIndexData() {
         log.info("Fetching Kp index data from NOAA");
-        
         return noaaWebClient.get()
                 .uri(appConfig.getNoaa().getApi().getKpIndexUrl())
                 .retrieve()
@@ -46,12 +45,17 @@ public class NoaaApiService {
                         return Flux.fromIterable(response)
                                 .map(node -> {
                                     try {
+                                        if (node == null || node.isNull() || node.get("time_tag") == null || node.get("time_tag").isNull()) {
+                                            log.warn("Skipping null or incomplete Kp index node: {}", node);
+                                            return null;
+                                        }
                                         String rawData = objectMapper.writeValueAsString(node);
+                                        Double kpIndex = node.has("Kp") && !node.get("Kp").isNull() ? node.get("Kp").asDouble() : null;
+                                        Double estimatedKp = node.has("estimated_Kp") && !node.get("estimated_Kp").isNull() ? node.get("estimated_Kp").asDouble() : null;
                                         return KpIndexEvent.builder()
                                                 .timeTag(node.get("time_tag").asText())
-                                                .kpIndex(node.has("Kp") ? node.get("Kp").asDouble() : null)
-                                                .estimatedKp(node.has("estimated_Kp") ? 
-                                                        node.get("estimated_Kp").asDouble() : null)
+                                                .kpIndex(kpIndex)
+                                                .estimatedKp(estimatedKp)
                                                 .source("noaa")
                                                 .timestamp(Instant.now())
                                                 .rawData(rawData)
